@@ -13,17 +13,20 @@ The shell processes user commands through a pipeline of stages: **input → lexi
 
 The shell follows a compiler-inspired architecture:
 
+```text
 User Input
-↓
+   ↓
 Shell Core (Prompt & Loop)
-↓
+   ↓
 Lexer (Tokenization)
-↓
+   ↓
 Parser (AST Construction)
-↓
+   ↓
 Executor (Process Management)
-↓
+   ↓
 Operating System (fork / exec)
+```
+
 
 
 Each stage is implemented as a separate module with clearly defined responsibilities.
@@ -92,10 +95,11 @@ The AST represents the logical structure of the command, including pipelines and
 
 **Example AST:**
 
+```
 PIPE
 ├── COMMAND (ls -l)
 └── COMMAND (grep txt)
-
+```
 
 Using an AST allows the shell to:
 - Respect operator precedence
