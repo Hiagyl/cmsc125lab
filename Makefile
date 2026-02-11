@@ -16,8 +16,10 @@ OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
+	@mkdir -p $(BIN_DIR)
 	@echo "Linking objects..."
 	$(CC) $(CFLAGS) -o $@ $^
+
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
