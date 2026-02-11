@@ -1,5 +1,7 @@
 #include "core/loop.h"
 #include "core/context.h"
+#include "parsing/parser.h"
+#include "execution/executor.h"
 #include "builtins/builtins.h"  // now loop.c can "see" builtin_cd, etc.
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,8 +13,8 @@
 // #include "execution/executor.h"
 
 // adding these since parser and executor are still disconnected
-char** parse_command(char *line);
-void executor(ShellContext *ctx, char **args);
+
+
 
 void shell_loop(ShellContext *ctx) {
     char line[1024];
@@ -35,7 +37,7 @@ void shell_loop(ShellContext *ctx) {
 
         if (strlen(line) == 0) continue;    // skip empty input
         
-        char **args = parse_command(line); 
+        char **args = parse_input(line); 
 
         if (args != NULL && args[0] != NULL) {
             // the executor will handle fork/exec OR call your built-ins
