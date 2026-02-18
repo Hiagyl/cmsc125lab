@@ -7,11 +7,22 @@
 #include "core/context.h"
 #include "builtins/builtins.h"
 #include "execution/executor.h"
+#include "execution/jobs.h"
+
 
 // Executor function
 void executor(ShellContext *ctx, char **args) {
     if (args[0] == NULL) return;
 
+     /* Reap any finished background jobs */
+    reap_background_jobs();
+
+    /* Check if background execution */
+    if (is_background(args))
+    {
+        handle_background(args);
+        return;
+    }
     // Handle built-in commands first
     if (strcmp(args[0], "cd") == 0) {
         builtin_cd(args);
