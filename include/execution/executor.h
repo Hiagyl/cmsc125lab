@@ -5,4 +5,6 @@
 
 void executor(ShellContext *ctx, char **args);
 
+void handle_redirection(char **args);
+
 #endif

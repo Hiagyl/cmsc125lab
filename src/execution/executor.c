@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include "core/context.h"
 #include "builtins/builtins.h"
+#include "execution/executor.h"
 
 // Executor function
 void executor(ShellContext *ctx, char **args) {
@@ -33,6 +34,8 @@ void executor(ShellContext *ctx, char **args) {
     pid_t pid = fork();
     if (pid == 0) {
         // Child process
+        handle_redirection(args);
+        
         if (execvp(args[0], args) == -1) {
             perror("mysh");
         }
