@@ -27,8 +27,7 @@ void shell_loop(ShellContext *ctx) {
 
     while (ctx->is_running) {
         // cleanup background jobs (reap zombies)
-        int status;
-        while (waitpid(-1, &status, WNOHANG) > 0); // TODO: move to an exp func
+        reap_background_jobs();
 
         // print the interactive prompt
         printf("mysh> ");

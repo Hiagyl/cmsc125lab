@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/wait.h>
 
 #include "shell.h"
@@ -101,7 +102,13 @@ void executor(ShellContext *ctx, char **args) {
         // Child Process
         handle_redirection(args);
         if (execvp(args[0], args) == -1) {
-            perror("mysh");
+            // check if the error was specifically that the file/command doesn't exist
+            if (errno == ENOENT) {
+                fprintf(stderr, "mysh: %s: command not found\n", args[0]);
+            } else {
+                // handle other errors (like permission denied) normally
+                perror("mysh");
+            }
         }
         exit(EXIT_FAILURE);
     } else if (pid > 0) {
@@ -114,8 +121,17 @@ void executor(ShellContext *ctx, char **args) {
                 // Store command string for the "Finished" message
                 jobs[job_count].command[0] = '\0';
                 for (int i = 0; args[i]; i++) {
-                    strncat(jobs[job_count].command, args[i], 255);
-                    strncat(jobs[job_count].command, " ", 255);
+                    // calculate remaining space: total(255) - used(strlen) - 1(for null)
+                    int remaining = 255 - strlen(jobs[job_count].command) - 1;
+                    if (remaining > 0) {
+                        strncat(jobs[job_count].command, args[i], remaining);
+
+                        // recalculate remaining for the space
+                        remaining = 255 - (int)strlen(jobs[job_count].command) - 1;
+                        if (remaining > 0) {
+                            strncat(jobs[job_count].command, " ", remaining);
+                        }
+                    }
                 }
                 printf("[%d] Started: %d\n", jobs[job_count].job_id, pid);
                 job_count++;
