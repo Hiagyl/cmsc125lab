@@ -44,6 +44,7 @@ void shell_loop(ShellContext *ctx) {
         line[strcspn(line, "\n")] = 0;
         if (strlen(line) == 0) continue; 
         
+        add_to_history(ctx, line);
         Command *cmd = parse_command(line); 
 
         if (cmd) {
