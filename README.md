@@ -24,7 +24,7 @@ make run
 ### **Clean Build Files**
 To clean all the built files for recompilation:
 ```bash
-make run
+make clean
 ```
 
 ## 2. Implemented Features
@@ -64,3 +64,4 @@ The shell is designed with a **Context-Command architecture** to ensure modulari
 * **Signal Handling**: Pressing `Ctrl+C` will terminate the entire shell rather than just the foreground process.
 * **Environment Variables**: While it uses `$PATH` to find commands, it does not support custom environment variable expansion (e.g., `echo $USER`).
 * **Reaping Delay**: Background job completion messages appear only when the user presses `Enter` or runs a subsequent command, as the `reap_background_jobs` function is tied to the main execution loop.
+

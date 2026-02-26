@@ -1,0 +1,31 @@
+Test Commands
+
+# External Commands
+ls -la
+echo "Hello"
+cat output.txt //if there is an output.txt
+
+# Builtins
+cd
+pwd
+history
+exit
+
+# I/O Redirection
+echo "test" > file.txt
+echo "more" >> file.txt
+wc -l < file.txt
+sort < input.txt > output.txt
+grep "word" < input.txt > output.txt
+grep "word" > output.txt < input.txt
+
+# Background Jobs
+sleep 10 &
+sleep 5 &
+ls > file.txt &
+
+# Edge cases
+nonexistentcomm //should throw error
+sleep 10& // no spaces
+cat<file.txt
+ls      -la  //many spaces
