@@ -7,7 +7,16 @@
 /* --- 1. Constants and Data Structures --- */
 
 #define MAX_BG_JOBS 100
+#define MAX_ARGS 100
 
+typedef struct {
+    char *argv[MAX_ARGS];   // command + arguments
+    char *input_file;       // for <
+    char *output_file;      // for > or >>
+    int append;             // 0 = >, 1 = >>
+} Command;
+
+void free_command(Command *cmd);
 typedef struct {
     pid_t pid;
     int job_id;
