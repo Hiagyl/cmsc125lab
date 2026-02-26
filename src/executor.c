@@ -79,18 +79,6 @@ void executor(ShellContext *ctx, Command *cmd) {
     } 
     else if (pid > 0) {
         if (cmd->background) {
-            int status;
-            usleep(10000); // Wait 10ms
-            
-            pid_t result = waitpid(pid, &status, WNOHANG);
-            
-            // If result == pid, it means the child already finished (likely an error)
-            if (result == pid) {
-                // If it exited with our specific error code 127, don't add to jobs
-                if (WIFEXITED(status) && WEXITSTATUS(status) == 127) {
-                    return; 
-                }
-            }
             if (ctx->job_count < MAX_BG_JOBS) {
                 BackgroundJob *j = &ctx->jobs[ctx->job_count];
                 j->pid = pid;
