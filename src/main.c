@@ -55,10 +55,14 @@ void add_to_history(ShellContext *ctx, const char *line) {
     ctx->history[ctx->history_count++] = strdup(line);
 }
 
-void shell_loop(ShellContext *ctx) {
+int main() {
+    ShellContext *ctx = context_create();
+    if (!ctx) return 1;
+
     char line[1024];
 
     while (ctx->is_running) {
+        reap_background_jobs(ctx);
         printf("mysh> ");
         fflush(stdout);
 
@@ -75,13 +79,6 @@ void shell_loop(ShellContext *ctx) {
             free_command(cmd); // Clean up the struct after execution
         }
     }
-}
-
-int main() {
-    ShellContext *ctx = context_create();
-    if (!ctx) return 1;
-
-    shell_loop(ctx);
 
     context_free(ctx);
     return 0;
