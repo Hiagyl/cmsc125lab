@@ -3,9 +3,35 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <errno.h>
 #include "shell.h"
+
+int command_exists(char *cmd) {
+    if (strchr(cmd, '/') != NULL) {
+        return access(cmd, X_OK) == 0;
+    }
+
+    char *path = getenv("PATH");
+    if (!path) return 0;
+
+    char *path_copy = strdup(path);
+    char *dir = strtok(path_copy, ":");
+    char full_path[1024];
+
+    while (dir != NULL) {
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir, cmd);
+        if (access(full_path, X_OK) == 0) {
+            free(path_copy);
+            return 1; // Found it!
+        }
+        dir = strtok(NULL, ":");
+    }
+
+    free(path_copy);
+    return 0; // Not found anywhere
+}
 
 void apply_redirection(Command *cmd) {
     if (cmd->input_file) {
@@ -30,6 +56,11 @@ void executor(ShellContext *ctx, Command *cmd) {
 
     if (handle_builtins(ctx, cmd)) return;
 
+    if (!command_exists(cmd->argv[0])) {
+        fprintf(stderr, "mysh: command not found: %s\n", cmd->argv[0]);
+        return; // EXIT EARLY - Do not fork, do not print "Started"
+    }
+    
     pid_t pid = fork();
     if (pid == 0) {
         apply_redirection(cmd);
@@ -48,6 +79,18 @@ void executor(ShellContext *ctx, Command *cmd) {
     } 
     else if (pid > 0) {
         if (cmd->background) {
+            int status;
+            usleep(10000); // Wait 10ms
+            
+            pid_t result = waitpid(pid, &status, WNOHANG);
+            
+            // If result == pid, it means the child already finished (likely an error)
+            if (result == pid) {
+                // If it exited with our specific error code 127, don't add to jobs
+                if (WIFEXITED(status) && WEXITSTATUS(status) == 127) {
+                    return; 
+                }
+            }
             if (ctx->job_count < MAX_BG_JOBS) {
                 BackgroundJob *j = &ctx->jobs[ctx->job_count];
                 j->pid = pid;
