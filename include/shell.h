@@ -43,6 +43,7 @@ typedef struct {
 
 ShellContext* context_create();
 void context_free(ShellContext *ctx);
+void cleanup_orphans(ShellContext *ctx);
 void shell_loop(ShellContext *ctx);
 
 /* --- 3. Parsing (parser.c) --- */

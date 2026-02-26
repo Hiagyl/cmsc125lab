@@ -40,6 +40,7 @@ void builtin_help() {
     printf("Built-in commands:\n");
     printf("  cd [dir]   - Change the current directory\n");
     printf("  pwd        - Print the current working directory\n");
+    printf("  history    - Display the last ten commmands\n");
     printf("  help       - Display this help message\n");
     printf("  exit       - Terminate the shell\n");
     printf("Use '&' for background tasks and '>', '>>', '<' for redirection.\n");

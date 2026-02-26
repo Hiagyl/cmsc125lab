@@ -1,5 +1,5 @@
 # MySh - A Custom Unix Shell
-Joshua Ticot | Emerson Contreras
+Joshua C. Ticot | Estefen Emerson R. Contreras
 
 A robust, modular Unix shell implemented in C, featuring advanced command parsing, I/O redirection, and background job management.
 
@@ -34,6 +34,7 @@ make clean
     * `cd`: Change directories.
     * `pwd`: Display the current working directory.
     * `exit`: Gracefully exit the shell.
+    * `help`: Lists all the builtin commands.
     * `history`: Display the last 10 commands entered.
 * **I/O Redirection**:
     * **Input redirection**: `cat < file.txt`
@@ -65,3 +66,10 @@ The shell is designed with a **Context-Command architecture** to ensure modulari
 * **Environment Variables**: While it uses `$PATH` to find commands, it does not support custom environment variable expansion (e.g., `echo $USER`).
 * **Reaping Delay**: Background job completion messages appear only when the user presses `Enter` or runs a subsequent command, as the `reap_background_jobs` function is tied to the main execution loop.
 
+## 5. Screenshots
+
+![Shell Loop](img/img1.png)
+![I/O Redirections](img/img2.png)
+![Background Jobs](img/img3.png)
+![Edge Cases](img/img4.png)
+![Edge Cases (locked files)](img/img5.png)
