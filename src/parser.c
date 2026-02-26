@@ -1,14 +1,51 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "shell.h"
 
+// Helper to add spaces around special characters for easier tokenization
+char* preprocess_line(char *line) {
+    char *new_line = malloc(strlen(line) * 3 + 1); // Extra space for added gaps
+    if (!new_line) return NULL;
+
+    int j = 0;
+    for (int i = 0; line[i] != '\0'; i++) {
+        // Handle ">>" (two characters)
+        if (line[i] == '>' && line[i+1] == '>') {
+            new_line[j++] = ' ';
+            new_line[j++] = '>';
+            new_line[j++] = '>';
+            new_line[j++] = ' ';
+            i++; // Skip next '>'
+        } 
+        // Handle single characters: <, >, &
+        else if (line[i] == '<' || line[i] == '>' || line[i] == '&') {
+            new_line[j++] = ' ';
+            new_line[j++] = line[i];
+            new_line[j++] = ' ';
+        } 
+        else {
+            new_line[j++] = line[i];
+        }
+    }
+    new_line[j] = '\0';
+    return new_line;
+}
+
 Command* parse_command(char *line) {
-    Command *cmd = calloc(1, sizeof(Command)); // calloc zeroes memory
-    if (!cmd) return NULL;
+    // 1. Preprocess to add spaces
+    char *formatted_line = preprocess_line(line);
+    if (!formatted_line) return NULL;
+
+    Command *cmd = calloc(1, sizeof(Command));
+    if (!cmd) {
+        free(formatted_line);
+        return NULL;
+    }
 
     int i = 0;
-    char *token = strtok(line, " \t");
+    char *token = strtok(formatted_line, " \t");
 
     while (token != NULL && i < MAX_ARGS - 1) {
         if (strcmp(token, "<") == 0) {
@@ -38,6 +75,8 @@ Command* parse_command(char *line) {
         token = strtok(NULL, " \t");
     }
     cmd->argv[i] = NULL;
+
+    free(formatted_line); // Clean up the temporary formatted string
     return cmd;
 }
 
