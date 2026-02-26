@@ -14,7 +14,30 @@ ShellContext* context_create() {
 }
 
 void context_free(ShellContext *ctx) {
+    if (!ctx) return;
+
+    // Free all command strings stored in history
+    for (int i = 0; i < ctx->history_count; i++) {
+        if (ctx->history[i]) {
+            free(ctx->history[i]);
+        }
+    }
+
+    // Handle orphan background jobs 
+    cleanup_orphans(ctx);
+
+    // Finally, free the context struct itself
     free(ctx);
+}
+
+void cleanup_orphans(ShellContext *ctx) {
+    for (int i = 0; i < ctx->job_count; i++) {
+        // Send SIGTERM to tell the process to shut down
+        kill(ctx->jobs[i].pid, SIGTERM);
+        
+        // Use waitpid to "collect" the process so it doesn't become a zombie
+        waitpid(ctx->jobs[i].pid, NULL, 0);
+    }
 }
 
 void add_to_history(ShellContext *ctx, const char *line) {
