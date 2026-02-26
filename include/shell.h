@@ -10,10 +10,11 @@
 #define MAX_ARGS 100
 
 typedef struct {
-    char *argv[MAX_ARGS];   // command + arguments
-    char *input_file;       // for <
-    char *output_file;      // for > or >>
-    int append;             // 0 = >, 1 = >>
+    char *argv[MAX_ARGS];   // Command and arguments
+    char *input_file;       // Filename for <
+    char *output_file;      // Filename for > or >>
+    int append;             // 0 for >, 1 for >>
+    int background;         // 1 if & is present
 } Command;
 
 void free_command(Command *cmd);
