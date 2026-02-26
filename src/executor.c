@@ -1,130 +1,71 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-
+#include <string.h>
 #include "shell.h"
 
-// Background Job Management (formerly jobs.c)
-#define MAX_JOBS 100
-
-typedef struct {
-    int job_id;
-    pid_t pid;
-    char command[256];
-} Job;
-
-static Job jobs[MAX_JOBS];
-static int job_count = 0;
-static int next_job_id = 1;
-
-int is_background(char **args) {
-    int i = 0;
-    while (args[i]) i++;
-
-    if (i > 0 && strcmp(args[i - 1], "&") == 0) {
-        // remove the "&" so the OS doesn't try to execute it
-        args[i - 1] = NULL;
-        return 1;
+void apply_redirection(Command *cmd) {
+    if (cmd->input_file) {
+        int fd = open(cmd->input_file, O_RDONLY);
+        if (fd < 0) { perror("open input"); exit(1); }
+        dup2(fd, STDIN_FILENO);
+        close(fd);
     }
-    return 0;
-}
-
-void reap_background_jobs(void) {
-    int status;
-    for (int i = 0; i < job_count; i++) {
-        pid_t pid = waitpid(jobs[i].pid, &status, WNOHANG);
-        if (pid > 0) {
-            printf("[%d] Finished: %s (PID: %d)\n", jobs[i].job_id, jobs[i].command, jobs[i].pid);
-            
-            // shift array to remove the completed job
-            for (int j = i; j < job_count - 1; j++) {
-                jobs[j] = jobs[j + 1];
-            }
-            job_count--;
-            i--;
-        }
+    if (cmd->output_file) {
+        int flags = O_WRONLY | O_CREAT | (cmd->append ? O_APPEND : O_TRUNC);
+        int fd = open(cmd->output_file, flags, 0644);
+        if (fd < 0) { perror("open output"); exit(1); }
+        dup2(fd, STDOUT_FILENO);
+        close(fd);
     }
 }
 
-// I/O Redirection (formerly redirection.c)
+void executor(ShellContext *ctx, Command *cmd) {
+    if (cmd->argv[0] == NULL) return;
 
-void handle_redirection(char **args) {
-    for (int i = 0; args[i] != NULL; i++) {
-        int fd = -1;
+    reap_background_jobs(ctx);
 
-        if (strcmp(args[i], ">") == 0) {
-            // Output Redirection - Overwrite ">"
-            fd = open(args[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-            if (fd < 0) { perror("open"); exit(1); }
-            dup2(fd, STDOUT_FILENO);
-        } else if (strcmp(args[i], ">>") == 0) {
-            // Output Redirection - Append ">>"
-            fd = open(args[i + 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
-            if (fd < 0) { perror("open"); exit(1); }
-            dup2(fd, STDOUT_FILENO);
-        } else if (strcmp(args[i], "<") == 0) {
-            // Input Redirection "<"
-            fd = open(args[i + 1], O_RDONLY);
-            if (fd < 0) { perror("open"); exit(1); }
-            dup2(fd, STDIN_FILENO);
-        }
+    if (handle_builtins(ctx, cmd)) return;
 
-        if (fd != -1) {
-            close(fd);
-            args[i] = NULL; // terminate args at the symbol
-        }
-    }
-}
-
-// Main Execution Logic (formerly executor.c)
-
-void executor(ShellContext *ctx, char **args) {
-    if (args[0] == NULL) return;
-
-    reap_background_jobs();
-
-    // Built-ins Check
-    if (strcmp(args[0], "cd") == 0) { builtin_cd(args); return; }
-    if (strcmp(args[0], "pwd") == 0) { builtin_pwd(); return; }
-    if (strcmp(args[0], "help") == 0) { builtin_help(); return; }
-    if (strcmp(args[0], "exit") == 0) { builtin_exit(ctx); return; }
-
-    // Background Check
-    int background = is_background(args);
-
-    // Process Creation
     pid_t pid = fork();
     if (pid == 0) {
-        // Child Process
-        handle_redirection(args);
-        if (execvp(args[0], args) == -1) {
+        apply_redirection(cmd);
+        if (execvp(cmd->argv[0], cmd->argv) == -1) {
             perror("mysh");
         }
         exit(EXIT_FAILURE);
-    } else if (pid > 0) {
-        // Parent Process
-        if (background) {
-            if (job_count < MAX_JOBS) {
-                jobs[job_count].job_id = next_job_id++;
-                jobs[job_count].pid = pid;
-                
-                // Store command string for the "Finished" message
-                jobs[job_count].command[0] = '\0';
-                for (int i = 0; args[i]; i++) {
-                    strncat(jobs[job_count].command, args[i], 255);
-                    strncat(jobs[job_count].command, " ", 255);
-                }
-                printf("[%d] Started: %d\n", jobs[job_count].job_id, pid);
-                job_count++;
+    } 
+    else if (pid > 0) {
+        if (cmd->background) {
+            if (ctx->job_count < MAX_BG_JOBS) {
+                BackgroundJob *j = &ctx->jobs[ctx->job_count];
+                j->pid = pid;
+                j->job_id = ctx->next_job_id++;
+                strncpy(j->command_name, cmd->argv[0], 255);
+                printf("[%d] %d\n", j->job_id, pid);
+                ctx->job_count++;
             }
         } else {
-            int status;
-            waitpid(pid, &status, 0);
+            waitpid(pid, NULL, 0);
         }
     } else {
         perror("fork");
+    }
+}
+
+void reap_background_jobs(ShellContext *ctx) {
+    int status;
+    for (int i = 0; i < ctx->job_count; i++) {
+        pid_t pid = waitpid(ctx->jobs[i].pid, &status, WNOHANG);
+        if (pid > 0) {
+            printf("[%d] Finished: %s\n", ctx->jobs[i].job_id, ctx->jobs[i].command_name);
+            for (int j = i; j < ctx->job_count - 1; j++) {
+                ctx->jobs[j] = ctx->jobs[j + 1];
+            }
+            ctx->job_count--;
+            i--;
+        }
     }
 }
