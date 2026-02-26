@@ -1,5 +1,5 @@
 # MySh - A Custom Unix Shell
-Joshua C. Ticot | Estefen Emerson R. Contreras
+Joshua Ticot | Emerson Contreras
 
 A robust, modular Unix shell implemented in C, featuring advanced command parsing, I/O redirection, and background job management.
 
