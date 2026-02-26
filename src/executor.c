@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <errno.h>
 #include "shell.h"
 
 void apply_redirection(Command *cmd) {
@@ -33,7 +34,15 @@ void executor(ShellContext *ctx, Command *cmd) {
     if (pid == 0) {
         apply_redirection(cmd);
         if (execvp(cmd->argv[0], cmd->argv) == -1) {
-            perror("mysh");
+            if (errno == ENOENT) {
+                fprintf(stderr, "mysh: command not found: %s\n", cmd->argv[0]);
+            } else if (errno == EACCES) {
+                fprintf(stderr, "mysh: permission denied: %s\n", cmd->argv[0]);
+            } else {
+                perror("mysh");
+            }
+            /* Standard exit code for command not found is 127 */
+            exit(127);
         }
         exit(EXIT_FAILURE);
     } 
