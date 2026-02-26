@@ -44,7 +44,8 @@ void executor(ShellContext *ctx, Command *cmd) {
                 j->pid = pid;
                 j->job_id = ctx->next_job_id++;
                 strncpy(j->command_name, cmd->argv[0], 255);
-                printf("[%d] %d\n", j->job_id, pid);
+               printf("[%d] Started background job: %s (PID: %d)\n", 
+                        j->job_id, cmd->argv[0], pid);
                 ctx->job_count++;
             }
         } else {
@@ -60,7 +61,10 @@ void reap_background_jobs(ShellContext *ctx) {
     for (int i = 0; i < ctx->job_count; i++) {
         pid_t pid = waitpid(ctx->jobs[i].pid, &status, WNOHANG);
         if (pid > 0) {
-            printf("[%d] Finished: %s\n", ctx->jobs[i].job_id, ctx->jobs[i].command_name);
+            printf("[%d] Finished background job: %s (PID: %d)\n", 
+                    ctx->jobs[i].job_id, 
+                    ctx->jobs[i].command_name, 
+                    ctx->jobs[i].pid);
             for (int j = i; j < ctx->job_count - 1; j++) {
                 ctx->jobs[j] = ctx->jobs[j + 1];
             }

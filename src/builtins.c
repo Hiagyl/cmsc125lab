@@ -2,22 +2,22 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#include <string.h>
 
 #include "shell.h"
 
-// standard fallback for systems where PATH_MAX isn't defined
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
 
+/* --- Internal Built-in Implementations --- */
+
 // cd: Change Directory
-void builtin_cd(char **args) {
-    // args[0] is "cd", args[1] is the target directory
-    if (args[1] == NULL) {
+void builtin_cd(Command *cmd) {
+    if (cmd->argv[1] == NULL) {
         fprintf(stderr, "mysh: expected argument to \"cd\"\n");
     } else {
-        if (chdir(args[1]) != 0) {
-            // if chdir fails (e.g., folder doesn't exist)
+        if (chdir(cmd->argv[1]) != 0) {
             perror("mysh");
         }
     }
@@ -37,18 +37,40 @@ void builtin_pwd() {
 void builtin_help() {
     printf("CMSC 125 - mysh\n");
     printf("Type program names and arguments, then hit enter.\n");
-    printf("The following are built-in commands:\n");
+    printf("Built-in commands:\n");
     printf("  cd [dir]   - Change the current directory\n");
     printf("  pwd        - Print the current working directory\n");
     printf("  help       - Display this help message\n");
     printf("  exit       - Terminate the shell\n");
-    printf("Use the & at the end of a command to run it in the background.\n");
+    printf("Use '&' for background tasks and '>', '>>', '<' for redirection.\n");
 }
 
 // exit: Terminate Shell
 void builtin_exit(ShellContext *ctx) {
-    printf("Goodbye!\n");
-    ctx->is_running = false;    // set the flag so the loop in loop.c stops
+    ctx->is_running = false;
+}
 
-    // Note: any final cleanup of background jobs can be called here or in context_free.
+/* --- Public Dispatcher --- */
+
+int handle_builtins(ShellContext *ctx, Command *cmd) {
+    if (cmd->argv[0] == NULL) return 0;
+
+    if (strcmp(cmd->argv[0], "cd") == 0) {
+        builtin_cd(cmd);
+        return 1;
+    }
+    if (strcmp(cmd->argv[0], "pwd") == 0) {
+        builtin_pwd();
+        return 1;
+    }
+    if (strcmp(cmd->argv[0], "help") == 0) {
+        builtin_help();
+        return 1;
+    }
+    if (strcmp(cmd->argv[0], "exit") == 0) {
+        builtin_exit(ctx);
+        return 1;
+    }
+
+    return 0; // Not a builtin, let the executor handle it
 }

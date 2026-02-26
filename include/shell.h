@@ -4,10 +4,10 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
-/* --- 1. Constants and Data Structures --- */
-
-#define MAX_BG_JOBS 100
 #define MAX_ARGS 100
+#define MAX_BG_JOBS 100
+
+/* --- 1. Data Structures --- */
 
 typedef struct {
     char *argv[MAX_ARGS];   // Command and arguments
@@ -17,20 +17,20 @@ typedef struct {
     int background;         // 1 if & is present
 } Command;
 
-void free_command(Command *cmd);
 typedef struct {
     pid_t pid;
     int job_id;
-    char *command_name;
+    char command_name[256];
 } BackgroundJob;
 
 typedef struct {
     bool is_running;
     BackgroundJob jobs[MAX_BG_JOBS];
     int job_count;
+    int next_job_id;
 } ShellContext;
 
-/* --- 2. Core Shell Management (main.c) --- */
+/* --- 2. Core Functions --- */
 
 ShellContext* context_create();
 void context_free(ShellContext *ctx);
@@ -38,20 +38,18 @@ void shell_loop(ShellContext *ctx);
 
 /* --- 3. Parsing (parser.c) --- */
 
-char **parse_input(char *line);
-void free_args(char **args); // Corrected return type to void from char
+Command* parse_command(char *line);
+void free_command(Command *cmd);
 
-/* --- 4. Execution & Jobs (executor.c) --- */
+/* --- 4. Execution (executor.c) --- */
 
-void executor(ShellContext *ctx, char **args);
-void handle_redirection(char **args);
-void handle_background(char **args);
-void reap_background_jobs(void);
-int is_background(char **args);
+void executor(ShellContext *ctx, Command *cmd);
+void reap_background_jobs(ShellContext *ctx);
 
-/* --- 5. Built-in Commands (builtins.c) --- */
+/* --- 5. Built-ins (builtins.c) --- */
 
-void builtin_cd(char **args);
+int handle_builtins(ShellContext *ctx, Command *cmd);
+void builtin_cd(Command *cmd);
 void builtin_pwd();
 void builtin_help();
 void builtin_exit(ShellContext *ctx);
