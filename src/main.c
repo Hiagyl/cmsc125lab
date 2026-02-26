@@ -17,6 +17,21 @@ void context_free(ShellContext *ctx) {
     free(ctx);
 }
 
+void add_to_history(ShellContext *ctx, const char *line) {
+    if (!line || strlen(line) == 0) return;
+
+    // If history is full, free the oldest command (index 0)
+    if (ctx->history_count == MAX_HISTORY) {
+        free(ctx->history[0]);
+        for (int i = 1; i < MAX_HISTORY; i++) {
+            ctx->history[i - 1] = ctx->history[i];
+        }
+        ctx->history_count--;
+    }
+
+    ctx->history[ctx->history_count++] = strdup(line);
+}
+
 void shell_loop(ShellContext *ctx) {
     char line[1024];
 

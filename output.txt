@@ -1,0 +1,10 @@
+hi
+Makefile
+README.md
+bin
+docs
+include
+output.txt
+scripts
+src
+tests

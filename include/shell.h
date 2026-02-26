@@ -6,6 +6,10 @@
 
 #define MAX_ARGS 100
 #define MAX_BG_JOBS 100
+#define MAX_HISTORY 10
+
+
+
 
 /* --- 1. Data Structures --- */
 
@@ -23,12 +27,17 @@ typedef struct {
     char command_name[256];
 } BackgroundJob;
 
+
 typedef struct {
     bool is_running;
     BackgroundJob jobs[MAX_BG_JOBS];
     int job_count;
     int next_job_id;
+    
+    char *history[MAX_HISTORY];
+    int history_count;
 } ShellContext;
+
 
 /* --- 2. Core Functions --- */
 
@@ -54,4 +63,8 @@ void builtin_pwd();
 void builtin_help();
 void builtin_exit(ShellContext *ctx);
 
+/* --- 6. Command History --- */
+
+void add_to_history(ShellContext *ctx, const char *line);
+void builtin_history(ShellContext *ctx);
 #endif
