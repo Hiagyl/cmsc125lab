@@ -50,6 +50,12 @@ void builtin_exit(ShellContext *ctx) {
     ctx->is_running = false;
 }
 
+void builtin_history(ShellContext *ctx) {
+    for (int i = 0; i < ctx->history_count; i++) {
+        printf("%d  %s\n", i + 1, ctx->history[i]);
+    }
+}
+
 /* --- Public Dispatcher --- */
 
 int handle_builtins(ShellContext *ctx, Command *cmd) {
@@ -71,6 +77,9 @@ int handle_builtins(ShellContext *ctx, Command *cmd) {
         builtin_exit(ctx);
         return 1;
     }
+    if (strcmp(cmd->argv[0], "history") == 0) {
+        builtin_history(ctx);
+    return 1;}   
 
     return 0; // Not a builtin, let the executor handle it
 }
