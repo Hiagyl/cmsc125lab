@@ -15,17 +15,26 @@ exit
 echo "test" > file.txt
 echo "more" >> file.txt
 wc -l < file.txt
+echo "test2" > file.txt
 sort < input.txt > output.txt
+echo -e Coconut\nApple\nBanana > unsorted.txt
+sort < unsorted.txt > sorted.txt
+sort < unsorted.txt > out1.txt
+sort > out2.txt < unsorted.txt
 grep "word" < input.txt > output.txt
 grep "word" > output.txt < input.txt
 
 # Background Jobs
 sleep 10 &
 sleep 5 &
+echo "Quick" &
 ls > file.txt &
 
 # Edge cases
 nonexistentcomm //should throw error
 sleep 10& // no spaces
 cat<file.txt
+cat < imaginary_file.txt
 ls      -la  //many spaces
+echo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+ls -la > /dev/null
